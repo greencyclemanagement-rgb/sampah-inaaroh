@@ -1,0 +1,27 @@
+{
+  "name": "Pendataan Sampah Inaaroh",
+  "short_name": "Sampah Inaaroh",
+  "description": "Aplikasi pendataan sampah harian Pondok & SPPG Inaaroh Batang",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a7a4a",
+  "theme_color": "#1a7a4a",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": []
+}

@@ -1,7 +1,7 @@
 {
-  "name": "Pendataan Sampah Inaaroh",
-  "short_name": "Sampah Inaaroh",
-  "description": "Aplikasi pendataan sampah harian Pondok & SPPG Inaaroh Batang",
+  "name": "Data Sampah Inaaroh",
+  "short_name": "Inaaroh",
+  "description": "Aplikasi pendataan sampah harian Pondok & SPPG Inaaroh",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
@@ -22,6 +22,8 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "utilities"],
-  "screenshots": []
+  "categories": [
+    "productivity",
+    "utilities"
+  ]
 }

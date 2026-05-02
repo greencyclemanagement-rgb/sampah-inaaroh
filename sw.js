@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sampah-inaaroh-v1';
+const CACHE_NAME = 'sampah-inaaroh-v4';
 const ASSETS = [
   './index.html',
   './manifest.json',

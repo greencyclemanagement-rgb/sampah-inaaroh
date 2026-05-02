@@ -7,11 +7,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sampah Inaaroh">
-<meta name="description" content="Aplikasi pendataan sampah harian Pondok Inaaroh Batang">
+<meta name="apple-mobile-web-app-title" content="Data Sampah Inaaroh">
+<meta name="description" content="Aplikasi pendataan sampah harian Pondok & SPPG Inaaroh">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Sampah Inaaroh</title>
+<title>Data Sampah Inaaroh</title>
 <style>
   :root {
     --green: #1a7a4a;
@@ -163,8 +163,8 @@
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <h1>Sampah Inaaroh</h1>
-      <p>Pondok & SPPG Inaaroh, Batang</p>
+      <h1>Data Sampah Inaaroh</h1>
+      <p>Pondok & SPPG Inaaroh</p>
     </div>
     <div class="topbar-right">
       <div class="conn-dot" id="conn-dot"></div>
@@ -174,7 +174,7 @@
   <!-- SCREENS -->
   <div class="screen active" id="screen-input">
 
-    <div class="setup-banner" id="setup-banner">
+    <div class="setup-banner" id="setup-banner" style="display:none">
       <p id="setup-txt">Belum terhubung Google Sheets — isi URL Apps Script</p>
       <input type="url" id="gas-url" placeholder="https://script.google.com/macros/s/.../exec">
       <button class="btn btn-amber btn-sm" onclick="connectGAS()">Hubungkan</button>
@@ -191,6 +191,10 @@
       <div class="field-row">
         <div class="field"><label>Tanggal</label><input type="date" id="tgl-input"></div>
         <div class="field"><label>Petugas</label><input type="text" id="petugas" placeholder="Nama..."></div>
+      </div>
+      <div class="field" style="margin-top:4px">
+        <label>Sampah masuk belum dipilah (kg)</label>
+        <input type="number" min="0" step="0.1" inputmode="decimal" id="belum-dipilah" placeholder="0" oninput="updateSummary()">
       </div>
     </div>
 
@@ -227,10 +231,10 @@
     <div class="card">
       <div class="card-title">Tentang Aplikasi</div>
       <div class="setting-row">
-        <div><div class="setting-label">Aplikasi</div><div class="setting-sub">Pendataan Sampah Inaaroh</div></div>
+        <div><div class="setting-label">Aplikasi</div><div class="setting-sub">Pendataan Data Sampah Inaaroh</div></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">Lokasi</div><div class="setting-sub">Pondok & SPPG Inaaroh, Batang</div></div>
+        <div><div class="setting-label">Lokasi</div><div class="setting-sub">Pondok & SPPG Inaaroh</div></div>
       </div>
       <div class="setting-row">
         <div><div class="setting-label">Versi</div><div class="setting-sub">1.0.0</div></div>
@@ -298,12 +302,11 @@ let inputs={},activeKat="Semua",gasUrl="",historyData=[];
 function init(){
   const d=new Date();
   document.getElementById('tgl-input').value=d.toISOString().split('T')[0];
-  gasUrl=localStorage.getItem('gas_url_inaaroh')||'';
-  if(gasUrl){
-    document.getElementById('gas-url').value=gasUrl;
-    document.getElementById('gas-url-settings').value=gasUrl;
-    setConnected(true);
-  }
+  gasUrl='https://script.google.com/macros/s/AKfycbwc_QToyC-sUcirAzKE384Q7zegtmFF4TOuCEw-f_LmRVfqiaz77S2S5Tr3mtXlFy2kvg/exec';
+  localStorage.setItem('gas_url_inaaroh', gasUrl);
+  document.getElementById('gas-url').value=gasUrl;
+  document.getElementById('gas-url-settings').value=gasUrl;
+  setConnected(true);
   renderChips();
   renderList();
 }
@@ -384,27 +387,29 @@ function updateSummary(){
     const m=parseFloat(inputs['m_'+j.id])||0,k=parseFloat(inputs['k_'+j.id])||0;
     if(m||k)jenis++;masuk+=m;keluar+=k;
   });
+  const belum=parseFloat(document.getElementById('belum-dipilah').value)||0;
   document.getElementById('sum-jenis').textContent=jenis;
-  document.getElementById('sum-masuk').textContent=masuk.toFixed(1);
+  document.getElementById('sum-masuk').textContent=(masuk+belum).toFixed(1);
   document.getElementById('sum-keluar').textContent=keluar.toFixed(1);
 }
 
 async function simpanData(){
   const tgl=document.getElementById('tgl-input').value;
   const petugas=document.getElementById('petugas').value||'—';
+  const belumDipilah=parseFloat(document.getElementById('belum-dipilah').value)||0;
   if(!tgl){toast('Isi tanggal dulu','err');return}
   const rows=[];
   JENIS.forEach(j=>{
     const m=parseFloat(inputs['m_'+j.id])||0,k=parseFloat(inputs['k_'+j.id])||0;
     if(m||k)rows.push({id:j.id,nama:j.nama,kat:j.kat,metode:j.metode,masuk:m,keluar:k});
   });
-  if(!rows.length){toast('Belum ada data diisi','err');return}
+  if(!rows.length && !belumDipilah){toast('Belum ada data diisi','err');return}
   if(!gasUrl){toast('Hubungkan Google Sheets dulu','err');return}
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span>Menyimpan...';
   btn.disabled=true;
   try{
-    await fetch(gasUrl,{method:'POST',body:JSON.stringify({tgl,petugas,rows}),headers:{'Content-Type':'application/json'}});
+    await fetch(gasUrl,{method:'POST',body:JSON.stringify({tgl,petugas,belumDipilah,rows}),headers:{'Content-Type':'application/json'}});
     toast('Tersimpan ke Google Sheets!','ok');
     btn.innerHTML='Simpan & Kirim ke Google Sheets';
     btn.disabled=false;
@@ -419,6 +424,7 @@ function resetForm(){
   if(!confirm('Reset semua isian?'))return;
   inputs={};
   document.getElementById('petugas').value='';
+  document.getElementById('belum-dipilah').value='';
   renderList();updateSummary();
 }
 
@@ -432,7 +438,7 @@ async function loadHistory(){
     const grouped={};
     rows.forEach(r=>{
       const key=r['Tanggal']+'|'+r['Petugas'];
-      if(!grouped[key])grouped[key]={tgl:r['Tanggal'],petugas:r['Petugas'],rows:[]};
+      if(!grouped[key])grouped[key]={tgl:r['Tanggal'],petugas:r['Petugas'],belumDipilah:parseFloat(r['Belum Dipilah (kg)'])||0,rows:[]};
       grouped[key].rows.push({nama:r['Jenis Sampah'],kat:r['Kategori'],masuk:parseFloat(r['Volume Masuk (kg)'])||0,keluar:parseFloat(r['Volume Keluar (kg)'])||0});
     });
     historyData=Object.values(grouped).sort((a,b)=>b.tgl.localeCompare(a.tgl));
@@ -460,6 +466,7 @@ function renderHistory(){
           <div class="hist-petugas">${h.petugas}</div>
         </div>
         <div class="hist-stats">
+          ${h.belumDipilah?`<div class="hist-stat">Belum dipilah <span>${h.belumDipilah.toFixed(1)}</span> kg</div>`:''}
           <div class="hist-stat">Masuk <span>${totalM.toFixed(1)}</span> kg</div>
           <div class="hist-stat">Keluar <span>${totalK.toFixed(1)}</span> kg</div>
         </div>
@@ -479,9 +486,9 @@ function renderHistory(){
 
 function exportCSV(){
   if(!historyData.length){toast('Muat data dari Sheets dulu','err');return}
-  let csv='Tanggal,Petugas,Jenis Sampah,Kategori,Volume Masuk (kg),Volume Keluar (kg)\n';
+  let csv='Tanggal,Petugas,Belum Dipilah (kg),Jenis Sampah,Kategori,Volume Masuk (kg),Volume Keluar (kg)\n';
   historyData.forEach(h=>h.rows.forEach(r=>{
-    csv+=`${h.tgl},${h.petugas},${r.nama},${r.kat},${r.masuk},${r.keluar}\n`;
+    csv+=`${h.tgl},${h.petugas},${h.belumDipilah||0},${r.nama},${r.kat},${r.masuk},${r.keluar}\n`;
   }));
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
